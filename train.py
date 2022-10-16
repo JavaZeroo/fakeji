@@ -94,11 +94,13 @@ def train(train_ds, logger, name):
     with tqdm(train_dl, desc='Train', miniters=10) as progress:
         for batch_idx, (source, target) in enumerate(progress):
             optim.zero_grad()
+            source = source.to(config.DEVICE)
+            target = target.to(config.DEVICE)
             with autocast():
-                img_pred = model(source.to(config.DEVICE))
+                img_pred = model(source)
                 ssim_loss = 1 - ssim(img_pred, target)
-
-                if np.isinf(ssim_loss) or np.isnan(ssim_loss):
+                print(ssim_loss.is_cuda)
+                if torch.isinf(ssim_loss).any() or torch.isnan(ssim_loss).any():
                     print(f'Bad loss, skipping the batch {batch_idx}')
                     del ssim_loss, img_pred
                     gc_collect()
@@ -121,7 +123,7 @@ def main():
     targets = read_data(config.TARGET_DIR)  
     train_ds, valid_ds = get_kfold_ds(1, sources, targets)
 
-    print(train_ds[10][0].shape)
+    # print(train_ds[10][0].shape)
     # ax = plt.subplot(1, 2, 1)
     # ax.imshow(train_ds[10][0])
     # ax.set_title('source')
