@@ -91,8 +91,8 @@ def train(train_ds, logger, name):
     optim = torch.optim.Adam(model.parameters())
     scheduler = torch.optim.lr_scheduler.OneCycleLR(optim, max_lr=config.ONE_CYCLE_MAX_LR, epochs=config.NUM_EPOCHS, steps_per_epoch=len(train_dl))
     scaler = GradScaler()
-    with tqdm(train_dl, desc='Train', miniters=10) as progress:
-        for batch_idx, (source, target) in enumerate(progress):
+    for epoch in tqdm(range(config.NUM_EPOCHS)):
+        for batch_idx, (source, target) in enumerate(train_dl):
             optim.zero_grad()
             source = source.to(config.DEVICE)
             target = target.to(config.DEVICE)
@@ -110,9 +110,8 @@ def train(train_ds, logger, name):
             scaler.scale(ssim_loss).backward()
             scaler.step(optim)
             scaler.update()
-            scheduler.step()
-            progress.set_description(f'Train loss: {ssim_loss :.02f}')
             logger.log({'loss': (ssim_loss), 'lr': scheduler.get_last_lr()[0]})
+        scheduler.step()
     save_model(name, model)
     return model
     
