@@ -1,5 +1,8 @@
 from pathlib import Path
+
 import torch
+
+
 class Config:
     def __init__(self, ):
         self.DATA_DIR = Path('data')
