@@ -1,25 +1,26 @@
-import cv2
-import numpy as np
-import random
-from utils import *
-from pathlib import Path
-import matplotlib.pyplot as plt
-from config import Config
-from utils import *
-from model import fujiModel
-import wandb
 import os
+import random
+from pathlib import Path
+
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
 # Pytorch
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
-from torch.utils.data import Dataset, DataLoader
-from torch.cuda.amp import GradScaler, autocast
 import torchvision.transforms as transforms
-import torch.nn.functional as F
+from torch.cuda.amp import GradScaler, autocast
+from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
+
+import wandb
+from config import Config
+from model import fujiModel
 from ssim import ssim
+from utils import *
 
 config = Config()
 os.environ['WANDB_API_KEY'] = '67c99389e1ae37b747c40634c51802a4bf019d49'
