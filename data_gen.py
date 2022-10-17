@@ -1,10 +1,12 @@
-import cv2
-import numpy as np
 import random
-import torch
-from utils import *
 from pathlib import Path
+
+import cv2
 import matplotlib.pyplot as plt
+import numpy as np
+import torch
+
+from utils import *
 
 DATA_DIR = Path('data')
 SOURCE_DIR = DATA_DIR / 'source'
