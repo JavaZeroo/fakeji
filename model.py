@@ -29,4 +29,4 @@ class fujiModel(nn.Module):
         out = self.sigmoid(out)
         out = self.fc2(out)
         out = self.sigmoid(out)
-        return out
+        return out.mul(x)

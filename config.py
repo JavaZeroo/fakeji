@@ -16,6 +16,7 @@ class Config:
         print(f'Batch Size: {self.BATCH_SIZE}')
         self.ONE_CYCLE_MAX_LR = 0.0001
         self.MODEL_PATH = Path('model')
+        self.check_path(self.MODEL_PATH)
 
     def get_batch_size(self, ):
         if self.DEVICE == 'cuda':
@@ -29,3 +30,6 @@ class Config:
         else:
             BATCH_SIZE = 2
         return BATCH_SIZE
+    
+    def check_path(self, path):
+        path.mkdir(exist_ok=True)
