@@ -67,52 +67,67 @@ def get_kfold_ds(fold, source_imgs, target_imgs):
     return train_ds, valid_ds
 
 def valid(model, valid_ds, shuffle=False):
-    valid_dl = DataLoader(valid_ds, batch_size=config.BATCH_SIZE, shuffle=shuffle)
+    valid_dl = DataLoader(valid_ds, batch_size=config.BATCH_SIZE, num_workers=int(os.cpu_count()/8), shuffle=shuffle)
+    criterion = nn.MSELoss(reduction='mean')
     losses = []
     with torch.no_grad():
         model.eval()
         with tqdm(valid_dl, desc='Eval', miniters=10) as progress:
             for i, (source, target) in enumerate(progress):
+                source = source.to(config.DEVICE)
+                target = target.to(config.DEVICE)
                 with autocast():
                     img_pred = model(source)
-                    ssim_loss = 1 - ssim(img_pred, target)
-                    losses.append(ssim_loss)
+                    ssim_loss = criterion(img_pred, target)
+                    # ssim_loss = 1 - ssim(img_pred, target)
+                    # losses.append(ssim_loss)
+                progress.set_description(f'Valid loss: {ssim_loss :.02f}')
+
         return np.mean(losses)
 
 
 
 
 
-def train(train_ds, logger, name):
+def train(train_ds, valid_ds, logger, name):
     print(len(train_ds))
-    set_seed(123)
-    train_dl = DataLoader(train_ds, batch_size=config.BATCH_SIZE, shuffle=True)
+    set_seed(11)
+    train_dl = DataLoader(train_ds, batch_size=config.BATCH_SIZE, num_workers=int(os.cpu_count()/8), shuffle=True)
     model = fujiModel()
     model = model.to(config.DEVICE)
     optim = torch.optim.Adam(model.parameters())
     scheduler = torch.optim.lr_scheduler.OneCycleLR(optim, max_lr=config.ONE_CYCLE_MAX_LR, epochs=config.NUM_EPOCHS, steps_per_epoch=len(train_dl))
     scaler = GradScaler()
-    for epoch in tqdm(range(config.NUM_EPOCHS)):
-        for batch_idx, (source, target) in enumerate(train_dl):
-            optim.zero_grad()
-            source = source.to(config.DEVICE)
-            target = target.to(config.DEVICE)
-            with autocast():
-                img_pred = model(source)
-                ssim_loss = 1 - ssim(img_pred, target)
-                print(ssim_loss.is_cuda)
-                if torch.isinf(ssim_loss).any() or torch.isnan(ssim_loss).any():
-                    print(f'Bad loss, skipping the batch {batch_idx}')
-                    del ssim_loss, img_pred
-                    gc_collect()
-                    continue
+    
+    criterion = nn.MSELoss(reduction='mean')
 
-            # scaler is needed to prevent "gradient underflow"
-            scaler.scale(ssim_loss).backward()
-            scaler.step(optim)
-            scaler.update()
-            logger.log({'loss': (ssim_loss), 'lr': scheduler.get_last_lr()[0]})
+    for epoch in tqdm(range(config.NUM_EPOCHS)):
+        with tqdm(train_dl, desc='Train', miniters=10) as progress:
+            for batch_idx, (source, target) in enumerate(progress):
+                optim.zero_grad()
+                source = source.to(config.DEVICE)
+                target = target.to(config.DEVICE)
+                with autocast():
+                    img_pred = model(source)
+                    # ssim_loss = 1 - ssim(img_pred, target)
+                    ssim_loss = criterion(img_pred, target)
+                    if torch.isinf(ssim_loss).any() or torch.isnan(ssim_loss).any():
+                        print(ssim_loss)
+                        print(f'Bad loss: {ssim_loss}, skipping the batch {batch_idx}')
+                        del ssim_loss, img_pred
+                        gc_collect()
+                        continue
+
+                # scaler is needed to prevent "gradient underflow"
+                scaler.scale(ssim_loss).backward()
+                scaler.step(optim)
+                scaler.update()
+                # optim.steap()
+                logger.log({'loss': (ssim_loss), 'lr': scheduler.get_last_lr()[0]})
+                progress.set_description(f'Train loss: {ssim_loss :.02f}')
+
         scheduler.step()
+        valid(model, valid_ds)
     save_model(name, model)
     return model
     
@@ -140,7 +155,7 @@ def main():
         name = f'fakeji-fold{fold}'
         with wandb.init(project='fakeji', name=name, entity='jimmydut') as run:
             gc_collect()
-            models.append(train(train_ds, run, name))
+            models.append(train(train_ds, valid_ds, run, name))
 
 
 if __name__ == '__main__':
