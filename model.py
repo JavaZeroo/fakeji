@@ -20,13 +20,25 @@ from utils import *
 class fujiModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.fc1 = nn.Linear(4896, 4896)
+        self.fcr = nn.Linear(4896, 4896)
+        self.fcg = nn.Linear(4896, 4896)
+        self.fcb = nn.Linear(4896, 4896)
         self.sigmoid = nn.Sigmoid()
-        self.fc2 = nn.Linear(4896, 4896)
 
     def forward(self, x):
-        out = self.fc1(x)
-        out = self.sigmoid(out)
-        out = self.fc2(out)
-        out = self.sigmoid(out)
-        return out.mul(x)
+        shape = x.size()
+        ret = torch.zeros_like(x)
+
+        r = x[:, 0, :, :]
+        g = x[:, 1, :, :]
+        b = x[:, 2, :, :]
+
+        r_out = self.fcr(r)
+        g_out = self.fcg(g)
+        b_out = self.fcb(b)
+
+        ret[:, 0, :, :] = r_out.mul(r)
+        ret[:, 1, :, :] = g_out.mul(g)
+        ret[:, 2, :, :] = b_out.mul(b)
+
+        return self.sigmoid(ret)

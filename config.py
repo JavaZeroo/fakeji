@@ -13,7 +13,7 @@ class Config:
         self.CROP_RATIO = 12
         self.DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.BATCH_SIZE = self.get_batch_size()
-        print(f'Batch Size: {self.BATCH_SIZE}')
+        # print(f'Batch Size: {self.BATCH_SIZE}')
         self.ONE_CYCLE_MAX_LR = 0.0001
         self.MODEL_PATH = Path('model')
         self.check_path(self.MODEL_PATH)
@@ -24,7 +24,7 @@ class Config:
             if self.device_name == 'NVIDIA GeForce RTX 3090':
                 BATCH_SIZE = 2
             elif self.device_name == 'NVIDIA GeForce RTX 2060':
-                BATCH_SIZE = 8
+                BATCH_SIZE = 2
             else:
                 BATCH_SIZE = 4
         else:
