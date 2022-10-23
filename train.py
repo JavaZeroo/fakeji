@@ -93,9 +93,15 @@ def train(train_ds, valid_ds, logger, name):
                 source = source.to(config.DEVICE)
                 target = target.to(config.DEVICE)
                 with autocast():
-                    img_pred = model(source)
+                    img_pred_r, img_pred_g, img_pred_b = model(source)
                     # ssim_loss = 1 - ssim(img_pred, target)
-                    ssim_loss = criterion(img_pred, target)
+                    target_r = target[:, 0, :, :]
+                    target_g = target[:, 1, :, :]
+                    target_b = target[:, 2, :, :]
+                    ssim_loss_r = criterion(img_pred_r, target_r)
+                    ssim_loss_g = criterion(img_pred_g, target_g)
+                    ssim_loss_b = criterion(img_pred_b, target_b)
+                    ssim_loss = (ssim_loss_r + ssim_loss_g + ssim_loss_b) / 3
                     if torch.isinf(ssim_loss).any() or torch.isnan(ssim_loss).any():
                         print(ssim_loss)
                         print(f'Bad loss: {ssim_loss}, skipping the batch {batch_idx}')

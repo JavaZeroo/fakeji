@@ -29,7 +29,6 @@ class fujiModel(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        shape = x.size()
         ret = torch.zeros_like(x)
 
         r = x[:, 0, :, :]
@@ -48,9 +47,8 @@ class fujiModel(nn.Module):
         g_out = self.fcg1(g)
         b_out = self.fcb1(b)
 
+        r_out = self.sigmoid(r_out)
+        g_out = self.sigmoid(g_out)
+        b_out = self.sigmoid(b_out)
 
-        ret[:, 0, :, :] = r_out.mul(r)
-        ret[:, 1, :, :] = g_out.mul(g)
-        ret[:, 2, :, :] = b_out.mul(b)
-
-        return self.sigmoid(ret)
+        return r_out, g_out, b_out
