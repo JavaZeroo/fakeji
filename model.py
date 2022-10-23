@@ -20,9 +20,12 @@ from utils import *
 class fujiModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.fcr = nn.Linear(4896, 4896)
-        self.fcg = nn.Linear(4896, 4896)
-        self.fcb = nn.Linear(4896, 4896)
+        self.fcr1 = nn.Linear(4896, 4896)
+        self.fcg1 = nn.Linear(4896, 4896)
+        self.fcb1 = nn.Linear(4896, 4896)
+        self.fcr2 = nn.Linear(4896, 4896)
+        self.fcg2 = nn.Linear(4896, 4896)
+        self.fcb2 = nn.Linear(4896, 4896)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
@@ -33,9 +36,18 @@ class fujiModel(nn.Module):
         g = x[:, 1, :, :]
         b = x[:, 2, :, :]
 
-        r_out = self.fcr(r)
-        g_out = self.fcg(g)
-        b_out = self.fcb(b)
+        r_out = self.fcr1(r)
+        g_out = self.fcg1(g)
+        b_out = self.fcb1(b)
+
+        r_out = self.sigmoid(r_out)
+        g_out = self.sigmoid(g_out)
+        b_out = self.sigmoid(b_out)
+
+        r_out = self.fcr1(r)
+        g_out = self.fcg1(g)
+        b_out = self.fcb1(b)
+
 
         ret[:, 0, :, :] = r_out.mul(r)
         ret[:, 1, :, :] = g_out.mul(g)
