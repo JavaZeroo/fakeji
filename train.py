@@ -24,6 +24,7 @@ from ssim import ssim
 from utils import *
 
 config = Config()
+config.print_config()
 os.environ['WANDB_API_KEY'] = '67c99389e1ae37b747c40634c51802a4bf019d49'
 
 def train_transform():
